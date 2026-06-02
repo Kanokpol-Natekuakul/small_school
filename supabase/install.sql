@@ -1,4 +1,4 @@
-﻿-- ==============================================
+-- ==============================================
 -- SMART SCHOOL OFFICE V.2 COMPLETE INSTALLATION
 -- Generated on 2026-06-02 15:14:47
 -- ==============================================
@@ -40,18 +40,6 @@ create table if not exists public.profiles (
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
-
--- Recreate profiles for any existing users in auth.users that don't have one (e.g. if tables were dropped/recreated)
-insert into public.profiles (id, full_name, role, avatar_url, phone, email)
-select 
-  id,
-  coalesce(raw_user_meta_data->>'full_name', email),
-  coalesce(raw_user_meta_data->>'role', 'general_staff'),
-  raw_user_meta_data->>'avatar_url',
-  raw_user_meta_data->>'phone',
-  email
-from auth.users
-on conflict (id) do nothing;
 
 -- Create Documents (Correspondence) table
 create table if not exists public.documents (
@@ -234,6 +222,19 @@ create policy "Allow write access to admin/director on school_settings"
   on public.school_settings for all to authenticated using (
     public.get_user_role() in ('admin', 'director')
   );
+
+-- Recreate profiles for any existing users in auth.users that don't have one yet
+-- This MUST run after all tables/triggers/policies are created, but before seed data
+insert into public.profiles (id, full_name, role, avatar_url, phone, email)
+select 
+  id,
+  coalesce(raw_user_meta_data->>'full_name', email),
+  coalesce(raw_user_meta_data->>'role', 'general_staff'),
+  raw_user_meta_data->>'avatar_url',
+  raw_user_meta_data->>'phone',
+  email
+from auth.users
+on conflict (id) do nothing;
 
 
 -- ==============================================
