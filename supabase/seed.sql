@@ -39,6 +39,20 @@ INSERT INTO public.school_settings (key, value) VALUES (
   )
 ) ON CONFLICT (key) DO UPDATE SET value = excluded.value;
 
+
+-- Recreate profiles for any existing users in auth.users that don't have one yet
+-- This MUST run after all tables/triggers/policies are created, and after TRUNCATE, but before profile updates/seed data
+insert into public.profiles (id, full_name, role, avatar_url, phone, email)
+select 
+  id,
+  coalesce(raw_user_meta_data->>'full_name', email),
+  coalesce(raw_user_meta_data->>'role', 'general_staff'),
+  raw_user_meta_data->>'avatar_url',
+  raw_user_meta_data->>'phone',
+  email
+from auth.users
+on conflict (id) do nothing;
+
 -- 4. อัปเดตข้อมูลฝ่ายงาน (Department) และสิทธิ์ใช้งาน (Role) ในตาราง Profiles อิงตาม Email ของผู้ใช้ที่สมัครในระบบ
 UPDATE public.profiles SET role = 'admin', department_id = 'd0000000-0000-0000-0000-000000000004' WHERE email = 'admin@school.go.th';
 UPDATE public.profiles SET role = 'director', department_id = 'd0000000-0000-0000-0000-000000000004' WHERE email = 'director@school.go.th';

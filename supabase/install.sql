@@ -251,20 +251,6 @@ create policy "Allow write access to admin/director on school_settings"
     public.get_user_role() in ('admin', 'director')
   );
 
--- Recreate profiles for any existing users in auth.users that don't have one yet
--- This MUST run after all tables/triggers/policies are created, but before seed data
-insert into public.profiles (id, full_name, role, avatar_url, phone, email)
-select 
-  id,
-  coalesce(raw_user_meta_data->>'full_name', email),
-  coalesce(raw_user_meta_data->>'role', 'general_staff'),
-  raw_user_meta_data->>'avatar_url',
-  raw_user_meta_data->>'phone',
-  email
-from auth.users
-on conflict (id) do nothing;
-
-
 -- ==============================================
 -- SEED DATA
 -- ==============================================
@@ -308,6 +294,20 @@ INSERT INTO public.school_settings (key, value) VALUES (
     'semester', '1'
   )
 ) ON CONFLICT (key) DO UPDATE SET value = excluded.value;
+
+
+-- Recreate profiles for any existing users in auth.users that don't have one yet
+-- This MUST run after all tables/triggers/policies are created, and after TRUNCATE, but before profile updates/seed data
+insert into public.profiles (id, full_name, role, avatar_url, phone, email)
+select 
+  id,
+  coalesce(raw_user_meta_data->>'full_name', email),
+  coalesce(raw_user_meta_data->>'role', 'general_staff'),
+  raw_user_meta_data->>'avatar_url',
+  raw_user_meta_data->>'phone',
+  email
+from auth.users
+on conflict (id) do nothing;
 
 -- 4. อัปเดตข้อมูลฝ่ายงาน (Department) และสิทธิ์ใช้งาน (Role) ในตาราง Profiles อิงตาม Email ของผู้ใช้ที่สมัครในระบบ
 UPDATE public.profiles SET role = 'admin', department_id = 'd0000000-0000-0000-0000-000000000004' WHERE email = 'admin@school.go.th';
@@ -443,5 +443,3 @@ INSERT INTO public.students (id, student_id, first_name, last_name, class_level,
 ('b0000000-0000-0000-0000-000000000006', '13001', 'วิภาวี', 'ดวงใจ', 'ม.4', '1', 'active', 'สายใจ ดวงใจ', '086-666-6666', now(), now()),
 ('b0000000-0000-0000-0000-000000000007', '11001', 'อนันต์', 'มั่นคง', 'ม.6', '1', 'active', 'สุรพล มั่นคง', '087-777-7777', now(), now()),
 ('b0000000-0000-0000-0000-000000000008', '11002', 'เบญจวรรณ', 'วิริยะ', 'ม.6', '2', 'active', 'สุนทร วิริยะ', '088-888-8888', now(), now());
-
-
