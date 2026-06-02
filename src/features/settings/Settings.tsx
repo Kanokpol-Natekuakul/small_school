@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { settingsService, authService } from '../../lib/db';
+import { settingsService, authService, schoolService } from '../../lib/db';
 import { backendMode, backendModeLabel, hasSupabaseConfig, isSupabaseBackend } from '../../lib/supabase';
 import type { Profile } from '../../types';
 import { useForm } from 'react-hook-form';
@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Database,
   Info,
-  Lock
+  Lock,
+  User
 } from 'lucide-react';
 
 const settingsSchema = zod.object({
@@ -43,11 +44,47 @@ type PasswordFormInput = zod.infer<typeof passwordSchema>;
 interface SettingsProps {
   currentUser: Profile;
   onSettingsUpdated: (newYear: string) => void;
+  onProfileUpdated?: (updatedProfile: Profile) => void;
 }
 
-export const SettingsPage: React.FC<SettingsProps> = ({ currentUser, onSettingsUpdated }) => {
+export const SettingsPage: React.FC<SettingsProps> = ({ currentUser, onSettingsUpdated, onProfileUpdated }) => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [profileName, setProfileName] = useState(currentUser.full_name || '');
+  const [profilePhone, setProfilePhone] = useState(currentUser.phone || '');
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
+
+  const onProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileName.trim()) {
+      setProfileError('กรุณากรอกชื่อ-นามสกุล');
+      return;
+    }
+    try {
+      setIsProfileSubmitting(true);
+      setProfileSuccess(null);
+      setProfileError(null);
+      const updated = await schoolService.updateStaff(currentUser.id, {
+        full_name: profileName,
+        phone: profilePhone
+      });
+      setProfileSuccess('บันทึกข้อมูลส่วนตัวเสร็จสิ้น!');
+      if (onProfileUpdated) {
+        onProfileUpdated(updated);
+      }
+      setTimeout(() => {
+        setProfileSuccess(null);
+      }, 3000);
+    } catch (err: any) {
+      console.error(err);
+      setProfileError(err.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูลส่วนตัว');
+    } finally {
+      setIsProfileSubmitting(false);
+    }
+  };
 
   const isEditable = currentUser.role === 'admin' || currentUser.role === 'director';
   const backendStatusTone = isSupabaseBackend
@@ -303,6 +340,78 @@ export const SettingsPage: React.FC<SettingsProps> = ({ currentUser, onSettingsU
 
         {/* Database Status Card & User Credentials */}
         <div className="space-y-6">
+          {/* Personal Profile Card */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+            <h3 className="font-bold text-slate-800 text-sm pb-3 border-b border-slate-100 flex items-center gap-2">
+              <User className="h-4.5 w-4.5 text-slate-400" />
+              ข้อมูลส่วนตัวผู้ใช้งาน
+            </h3>
+
+            {profileSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2 text-emerald-700 text-[10px] font-semibold">
+                <CheckCircle className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                <span>{profileSuccess}</span>
+              </div>
+            )}
+
+            {profileError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2 text-rose-700 text-[10px] font-semibold">
+                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" />
+                <span>{profileError}</span>
+              </div>
+            )}
+
+            <form onSubmit={onProfileSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1.5 pl-0.5">ชื่อ-นามสกุล *</label>
+                <input
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-600 mb-1.5 pl-0.5">เบอร์โทรศัพท์มือถือ</label>
+                <input
+                  type="text"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block font-semibold text-slate-400 mb-1 pl-0.5">ฝ่ายงาน</label>
+                  <div className="px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 text-[10px] truncate">
+                    {currentUser.department_id === 'd0000000-0000-0000-0000-000000000001' ? 'ฝ่ายบริหารวิชาการ' :
+                     currentUser.department_id === 'd0000000-0000-0000-0000-000000000002' ? 'ฝ่ายบริหารงบประมาณ' :
+                     currentUser.department_id === 'd0000000-0000-0000-0000-000000000003' ? 'ฝ่ายบริหารงานบุคคล' : 'ฝ่ายบริหารทั่วไป'}
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-400 mb-1 pl-0.5">ระดับสิทธิ์</label>
+                  <div className="px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 text-[10px] truncate capitalize">
+                    {currentUser.role === 'admin' ? 'ผู้ดูแลระบบ (Admin)' :
+                     currentUser.role === 'director' ? 'ผู้อำนวยการ (Director)' :
+                     currentUser.role === 'registrar' ? 'นายทะเบียน (Registrar)' :
+                     currentUser.role === 'teacher' ? 'ครูผู้สอน (Teacher)' : 'เจ้าหน้าที่ทั่วไป (Staff)'}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isProfileSubmitting}
+                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-400"
+              >
+                {isProfileSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูลส่วนตัว'}
+              </button>
+            </form>
+          </div>
+
           {/* Change Password Card */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
             <h3 className="font-bold text-slate-800 text-sm pb-3 border-b border-slate-100 flex items-center gap-2">

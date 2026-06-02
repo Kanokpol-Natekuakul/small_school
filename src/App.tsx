@@ -119,7 +119,7 @@ function AppContent() {
       case 'students':
         return <StudentDirectory currentUser={currentUser} />;
       case 'settings':
-        return <SettingsPage currentUser={currentUser} onSettingsUpdated={handleSettingsUpdated} />;
+        return <SettingsPage currentUser={currentUser} onSettingsUpdated={handleSettingsUpdated} onProfileUpdated={setCurrentUser} />;
       default:
         return <Dashboard currentUser={currentUser} setCurrentTab={setCurrentTab} />;
     }

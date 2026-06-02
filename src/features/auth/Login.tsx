@@ -159,28 +159,28 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             className="px-3.5 py-2 bg-slate-50/50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 rounded-xl text-slate-700 text-xs transition-all text-left flex flex-col justify-between cursor-pointer"
           >
             <span className="font-bold text-slate-800">แอดมิน</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Sirichai Admin</span>
+            {/* <span className="text-[9px] text-slate-400 mt-0.5">Sirichai Admin</span> */}
           </button>
           <button
             onClick={() => handleQuickLogin('director')}
             className="px-3.5 py-2 bg-slate-50/50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl text-slate-700 text-xs transition-all text-left flex flex-col justify-between cursor-pointer"
           >
             <span className="font-bold text-slate-800">ผู้อำนวยการ</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Dr. Somchai</span>
+            {/* <span className="text-[9px] text-slate-400 mt-0.5">Dr. Somchai</span> */}
           </button>
           <button
             onClick={() => handleQuickLogin('registrar')}
             className="px-3.5 py-2 bg-slate-50/50 hover:bg-purple-50 border border-slate-200 hover:border-purple-200 rounded-xl text-slate-700 text-xs transition-all text-left flex flex-col justify-between cursor-pointer"
           >
             <span className="font-bold text-slate-800">งานทะเบียน</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Napaporn</span>
+            {/* <span className="text-[9px] text-slate-400 mt-0.5">Napaporn</span> */}
           </button>
           <button
             onClick={() => handleQuickLogin('teacher')}
             className="px-3.5 py-2 bg-slate-50/50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 rounded-xl text-slate-700 text-xs transition-all text-left flex flex-col justify-between cursor-pointer"
           >
             <span className="font-bold text-slate-800">อาจารย์ผู้สอน</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Manas</span>
+            {/* <span className="text-[9px] text-slate-400 mt-0.5">Manas</span> */}
           </button>
         </div>
       </div>
