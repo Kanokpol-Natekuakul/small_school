@@ -117,6 +117,34 @@ returns text as $$
   select coalesce(auth.jwt() -> 'user_metadata' ->> 'role', 'general_staff');
 $$ language sql security definer;
 
+-- Diagnostic function to check table counts
+create or replace function public.get_db_diagnostic()
+returns json as $$
+declare
+  auth_count integer;
+  profile_count integer;
+  dept_count integer;
+  doc_count integer;
+  receiver_count integer;
+  student_count integer;
+begin
+  select count(*) into auth_count from auth.users;
+  select count(*) into profile_count from public.profiles;
+  select count(*) into dept_count from public.departments;
+  select count(*) into doc_count from public.documents;
+  select count(*) into receiver_count from public.document_receivers;
+  select count(*) into student_count from public.students;
+  return json_build_object(
+    'auth_users_count', auth_count,
+    'profiles_count', profile_count,
+    'departments_count', dept_count,
+    'documents_count', doc_count,
+    'receivers_count', receiver_count,
+    'students_count', student_count
+  );
+end;
+$$ language plpgsql security definer;
+
 -- Drop triggers if they exist to make the script repeatable
 drop trigger if exists on_auth_user_created on auth.users;
 drop trigger if exists update_profiles_updated_at on public.profiles;
