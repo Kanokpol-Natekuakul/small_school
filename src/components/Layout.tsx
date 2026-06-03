@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Profile } from '../types';
 import { authService } from '../lib/db';
+import { NotificationBell } from './NotificationBell';
 import {
   LayoutDashboard,
   FileDown,
@@ -71,12 +72,15 @@ export const Layout: React.FC<LayoutProps> = ({
           <GraduationCap className="h-6 w-6 text-emerald-400" />
           <span className="font-bold text-base tracking-wide">Smart School Office</span>
         </div>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-1 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white"
-        >
-          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell currentUser={currentUser} />
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-1 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white"
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Sidebar Backdrop */}
@@ -174,6 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
           
           <div className="flex items-center gap-3">
+            <NotificationBell currentUser={currentUser} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 text-xs font-semibold">
               <Calendar className="h-3.5 w-3.5 text-slate-400" />
               <span>ปีการศึกษา {academicYear}</span>
