@@ -3,6 +3,8 @@ import { schoolService, settingsService } from '../../lib/db';
 import type { Profile, Department } from '../../types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/Pagination';
 import * as zod from 'zod';
 import {
   Search,
@@ -38,6 +40,14 @@ export const StaffDirectory: React.FC<StaffDirectoryProps> = ({ currentUser }) =
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    paginatedItems,
+    setCurrentPage,
+    setItemsPerPage,
+  } = usePagination(filteredStaff, 20);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<StaffFormInput>({
     resolver: zodResolver(staffSchema),
@@ -217,7 +227,7 @@ export const StaffDirectory: React.FC<StaffDirectoryProps> = ({ currentUser }) =
         </div>
       ) : filteredStaff.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStaff.map((person) => (
+          {paginatedItems.map((person) => (
             <div
               key={person.id}
               className="bg-white border border-slate-200 hover:border-slate-300 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between space-y-4"
@@ -275,6 +285,16 @@ export const StaffDirectory: React.FC<StaffDirectoryProps> = ({ currentUser }) =
         <div className="py-16 text-center bg-white border border-slate-200 rounded-2xl shadow-xs">
           <p className="text-slate-500 font-medium">ไม่พบบุคลากรตามเงื่อนไขที่ค้นหา</p>
         </div>
+      )}
+
+      {filteredStaff.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredStaff.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
       )}
 
       {/* Modal Dialog */}

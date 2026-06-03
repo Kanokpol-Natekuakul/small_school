@@ -4,6 +4,8 @@ import type { Student, Profile, StudentStatus } from '../../types';
 import { exportStudentsToExcel } from '../../lib/exportExcel';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/Pagination';
 import * as zod from 'zod';
 import {
   Search,
@@ -42,6 +44,14 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({ currentUser 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    paginatedItems,
+    setCurrentPage,
+    setItemsPerPage,
+  } = usePagination(filteredStudents, 20);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<StudentFormInput>({
     resolver: zodResolver(studentSchema),
@@ -277,7 +287,7 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({ currentUser 
             <span className="text-slate-500 text-xs">กำลังค้นหาบัญชีนักเรียน...</span>
           </div>
         ) : filteredStudents.length > 0 ? (
-          filteredStudents.map((std) => (
+          paginatedItems.map((std) => (
             <div
               key={std.id}
               className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col space-y-4"
@@ -349,7 +359,7 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({ currentUser 
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredStudents.map((std) => (
+                {paginatedItems.map((std) => (
                   <tr key={std.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 font-mono font-semibold text-slate-900">{std.student_id}</td>
                     <td className="p-4 font-bold text-slate-800">{std.first_name} {std.last_name}</td>
@@ -389,6 +399,16 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({ currentUser 
           </div>
         )}
       </div>
+
+      {filteredStudents.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredStudents.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
+      )}
 
       {/* Modal Dialog */}
       {isModalOpen && (
