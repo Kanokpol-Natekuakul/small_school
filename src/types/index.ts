@@ -78,3 +78,27 @@ export interface SchoolSettings {
   academic_year: string;
   semester: string;
 }
+
+export interface DocumentAttachment {
+  id: string;
+  document_id: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  file_url: string;
+  uploaded_by?: string;
+  created_at: string;
+}
+
+export type NotificationType = 'new_document' | 'approval_needed' | 'document_approved' | 'new_circular' | 'circular_acknowledged';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  related_doc_id?: string;
+  created_at: string;
+}
