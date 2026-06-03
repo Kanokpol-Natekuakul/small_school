@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { docService, schoolService } from '../../lib/db';
-import type { Document, Profile } from '../../types';
+import type { Document, Profile, Student } from '../../types';
+import { DocumentBarChart } from '../../components/charts/DocumentBarChart';
+import { DocumentPieChart } from '../../components/charts/DocumentPieChart';
+import { PriorityChart } from '../../components/charts/PriorityChart';
+import { StudentClassChart } from '../../components/charts/StudentClassChart';
 import {
   FileDown,
   FileUp,
@@ -27,6 +31,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, setCurrentTab
     pendingDocs: 0,
   });
   const [recentUrgentDocs, setRecentUrgentDocs] = useState<Document[]>([]);
+  const [allDocs, setAllDocs] = useState<Document[]>([]);
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +61,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, setCurrentTab
         });
 
         setRecentUrgentDocs(urgent.slice(0, 3));
+        setAllDocs(docs);
+        setAllStudents(students);
       } catch (err) {
         console.error('Failed to load dashboard data', err);
       } finally {
@@ -224,8 +232,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, setCurrentTab
               </div>
             </div>
           </div>
-        </div>
+      </div>
 
+      {/* Overview Statistics Section */}
+      <div className="space-y-6">
+        <h3 className="text-slate-800 text-base font-bold flex items-center gap-2">
+          สถิติภาพรวม (Overview Statistics)
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+            <h4 className="font-bold text-slate-800 text-xs mb-4">ปริมาณการเดินหนังสือย้อนหลัง 6 เดือน</h4>
+            <DocumentBarChart documents={allDocs} />
+          </div>
+          
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+            <h4 className="font-bold text-slate-800 text-xs mb-4">สัดส่วนสถานะของหนังสือราชการ</h4>
+            <DocumentPieChart documents={allDocs} />
+          </div>
+          
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+            <h4 className="font-bold text-slate-800 text-xs mb-4">สัดส่วนความเร่งด่วนของหนังสือ</h4>
+            <PriorityChart documents={allDocs} />
+          </div>
+          
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+            <h4 className="font-bold text-slate-800 text-xs mb-4">จำนวนนักเรียนแยกตามระดับชั้นเรียน</h4>
+            <StudentClassChart students={allStudents} />
+          </div>
+        </div>
       </div>
     </div>
   );
