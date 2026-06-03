@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { docService } from '../../lib/db';
-import type { Document, Profile, DocPriority, DocStatus } from '../../types';
+import type { Document, Profile, DocPriority, DocStatus, DocumentAttachment } from '../../types';
 import { exportDocumentsToExcel } from '../../lib/exportExcel';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { fileStorageService } from '../../lib/fileStorage';
+import { FileUpload } from '../../components/FileUpload';
+import { AttachmentList } from '../../components/AttachmentList';
 import * as zod from 'zod';
 import {
   Search,
@@ -44,6 +47,10 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [attachmentsMap, setAttachmentsMap] = useState<Record<string, DocumentAttachment[]>>({});
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<DocumentAttachment[]>([]);
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<DocFormInput>({
     resolver: zodResolver(docSchema),
     defaultValues: {
@@ -64,6 +71,13 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
       const data = await docService.getDocs('outgoing');
       setDocs(data);
       setFilteredDocs(data);
+
+      const attsMap: Record<string, DocumentAttachment[]> = {};
+      for (const doc of data) {
+        const atts = await fileStorageService.getAttachments(doc.id);
+        attsMap[doc.id] = atts;
+      }
+      setAttachmentsMap(attsMap);
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,6 +114,8 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
 
   const handleOpenRegister = () => {
     setEditingDoc(null);
+    setSelectedFiles([]);
+    setAttachments([]);
     reset({
       doc_no: `รน.สว ๐๐${Math.floor(Math.random() * 50) + 10}/๒๕๖๙`,
       title: '',
@@ -113,8 +129,16 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (doc: Document) => {
+  const handleOpenEdit = async (doc: Document) => {
     setEditingDoc(doc);
+    setSelectedFiles([]);
+    try {
+      const atts = await fileStorageService.getAttachments(doc.id);
+      setAttachments(atts);
+    } catch (err) {
+      console.error(err);
+      setAttachments([]);
+    }
     reset({
       doc_no: doc.doc_no,
       title: doc.title,
@@ -130,12 +154,33 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
 
   const onSubmit = async (data: DocFormInput) => {
     try {
+      let savedDoc: Document;
       if (editingDoc) {
-        await docService.updateDoc(editingDoc.id, { ...data, category: 'outgoing' });
+        savedDoc = await docService.updateDoc(editingDoc.id, { ...data, category: 'outgoing' });
       } else {
-        await docService.createDoc({ ...data, category: 'outgoing' });
+        savedDoc = await docService.createDoc({ ...data, category: 'outgoing' });
       }
+
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          await fileStorageService.uploadFile(file, savedDoc.id);
+        }
+      }
+
       setIsModalOpen(false);
+      loadDocuments();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    try {
+      await fileStorageService.deleteFile(attachmentId);
+      if (editingDoc) {
+        const atts = await fileStorageService.getAttachments(editingDoc.id);
+        setAttachments(atts);
+      }
       loadDocuments();
     } catch (err) {
       console.error(err);
@@ -323,6 +368,11 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
                 <div>ผู้ส่ง: <strong className="text-slate-700 font-semibold">{doc.sender}</strong></div>
                 <div>ผู้รับ: <strong className="text-slate-700 font-semibold">{doc.receiver}</strong></div>
                 {doc.description && <div className="text-slate-400 mt-1 italic">{doc.description}</div>}
+                {attachmentsMap[doc.id] && attachmentsMap[doc.id].length > 0 && (
+                  <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                    <AttachmentList attachments={attachmentsMap[doc.id]} canDelete={false} />
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-slate-100 w-full shrink-0">
@@ -401,6 +451,11 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
                     <td className="p-4">
                       <div className="font-bold text-slate-800 leading-snug">{doc.title}</div>
                       {doc.description && <p className="text-slate-400 text-[10px] mt-1 truncate max-w-sm">{doc.description}</p>}
+                      {attachmentsMap[doc.id] && attachmentsMap[doc.id].length > 0 && (
+                        <div className="mt-2 max-w-md" onClick={(e) => e.stopPropagation()}>
+                          <AttachmentList attachments={attachmentsMap[doc.id]} canDelete={false} />
+                        </div>
+                      )}
                     </td>
                     <td className="p-4 text-slate-600 font-medium">{doc.receiver}</td>
                     <td className="p-4">{getPriorityBadge(doc.priority)}</td>
@@ -560,7 +615,33 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+              {/* File Attachment List (when editing) */}
+              {editingDoc && attachments.length > 0 && (
+                <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                  <AttachmentList
+                    attachments={attachments}
+                    canDelete={currentUser.role === 'admin' || currentUser.role === 'general_staff'}
+                    onDelete={handleDeleteAttachment}
+                  />
+                </div>
+              )}
+
+              {/* File Uploader */}
+              {(currentUser.role === 'admin' || currentUser.role === 'general_staff') && (
+                <div className="pt-2 border-t border-slate-100">
+                  <FileUpload
+                    onFilesSelected={setSelectedFiles}
+                    selectedFiles={selectedFiles}
+                    onRemoveFile={(index) => {
+                      const newFiles = [...selectedFiles];
+                      newFiles.splice(index, 1);
+                      setSelectedFiles(newFiles);
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0 flex-row">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
