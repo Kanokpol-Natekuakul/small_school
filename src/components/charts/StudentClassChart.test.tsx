@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { StudentClassChart } from './StudentClassChart';
@@ -40,6 +39,8 @@ describe('StudentClassChart Component', () => {
         class_level: 'ม.1',
         classroom: '1',
         status: 'active',
+        created_at: '2026-06-03T12:00:00Z',
+        updated_at: '2026-06-03T12:00:00Z',
       }
     ];
 

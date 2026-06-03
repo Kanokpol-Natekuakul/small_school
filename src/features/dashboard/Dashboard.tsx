@@ -233,6 +233,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, setCurrentTab
             </div>
           </div>
       </div>
+      </div>
 
       {/* Overview Statistics Section */}
       <div className="space-y-6">

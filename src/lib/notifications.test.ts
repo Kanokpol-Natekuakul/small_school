@@ -36,7 +36,7 @@ describe('notificationService', () => {
     const userId = 'sort-user';
     
     // Create notifications with slight delay to ensure different timestamps
-    const n1 = await notificationService.createNotification({
+    await notificationService.createNotification({
       user_id: userId,
       type: 'new_document',
       title: 'ข้อความแรก',
@@ -46,7 +46,7 @@ describe('notificationService', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    const n2 = await notificationService.createNotification({
+    await notificationService.createNotification({
       user_id: userId,
       type: 'new_circular',
       title: 'ข้อความสอง',

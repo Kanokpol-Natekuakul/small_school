@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { NotificationBell } from './NotificationBell';
@@ -27,6 +26,8 @@ describe('NotificationBell Component', () => {
     email: 'teacher@school.ac.th',
     role: 'teacher',
     department_id: 'dept-1',
+    created_at: '2026-06-03T12:00:00Z',
+    updated_at: '2026-06-03T12:00:00Z',
   };
 
   const sampleNotifications: Notification[] = [

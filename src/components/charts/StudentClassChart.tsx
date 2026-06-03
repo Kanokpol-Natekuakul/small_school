@@ -55,7 +55,7 @@ export const StudentClassChart: React.FC<StudentClassChartProps> = ({ students }
           <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', borderColor: '#e2e8f0', fontSize: '11px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-            formatter={(value: number) => [`${value} คน`, 'จำนวนนักเรียน']}
+            formatter={(value: any) => [`${value} คน`, 'จำนวนนักเรียน']}
           />
           <Bar name="จำนวนนักเรียน" dataKey="นักเรียน" fill="url(#colorStudents)" radius={[4, 4, 0, 0]} maxBarSize={25} />
         </BarChart>

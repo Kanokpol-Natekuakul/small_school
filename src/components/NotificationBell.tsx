@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, FileDown, CheckCircle, FileText, X, Circle } from 'lucide-react';
+import { Bell, FileDown, CheckCircle, FileText, Circle } from 'lucide-react';
 import { notificationService } from '../lib/notifications';
 import { timeAgo } from '../lib/timeAgo';
 import type { Notification, Profile } from '../types';
