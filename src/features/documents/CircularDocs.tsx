@@ -4,6 +4,8 @@ import type { Document, Profile, DocPriority } from '../../types';
 import { exportDocumentsToExcel } from '../../lib/exportExcel';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/Pagination';
 import * as zod from 'zod';
 import {
   Search,
@@ -49,6 +51,14 @@ export const CircularDocs: React.FC<CircularDocsProps> = ({ currentUser }) => {
   const [trackingDoc, setTrackingDoc] = useState<Document | null>(null);
   const [trackingList, setTrackingList] = useState<{ profile: Profile; readAt?: string }[]>([]);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    paginatedItems,
+    setCurrentPage,
+    setItemsPerPage,
+  } = usePagination(filteredDocs, 20);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<DocFormInput>({
     resolver: zodResolver(docSchema),
@@ -290,7 +300,7 @@ export const CircularDocs: React.FC<CircularDocsProps> = ({ currentUser }) => {
         </div>
       ) : filteredDocs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredDocs.map((doc) => {
+          {paginatedItems.map((doc) => {
             const hasRead = userReads[doc.id] || false;
             return (
               <div
@@ -378,6 +388,16 @@ export const CircularDocs: React.FC<CircularDocsProps> = ({ currentUser }) => {
           <p className="text-slate-500 font-medium">ไม่พบเอกสารแจ้งเวียนคำสั่งโรงเรียน</p>
           <p className="text-slate-400 text-[10px] mt-1">สามารถกด "สร้างประกาศเวียนใหม่" เพื่อเริ่มสร้างคำสั่งประชาสัมพันธ์ได้ทันที</p>
         </div>
+      )}
+
+      {filteredDocs.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredDocs.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
       )}
 
       {/* Register/Edit Modal Dialog */}

@@ -4,6 +4,8 @@ import type { Document, Profile, DocPriority, DocStatus } from '../../types';
 import { exportDocumentsToExcel } from '../../lib/exportExcel';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/Pagination';
 import * as zod from 'zod';
 import {
   Search,
@@ -43,6 +45,14 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    paginatedItems,
+    setCurrentPage,
+    setItemsPerPage,
+  } = usePagination(filteredDocs, 20);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<DocFormInput>({
     resolver: zodResolver(docSchema),
@@ -307,7 +317,7 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
             <span className="text-slate-500 text-xs">กำลังค้นหาเอกสาร...</span>
           </div>
         ) : filteredDocs.length > 0 ? (
-          filteredDocs.map((doc) => (
+          paginatedItems.map((doc) => (
             <div key={doc.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col space-y-4">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -394,7 +404,7 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredDocs.map((doc) => (
+                {paginatedItems.map((doc) => (
                   <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 font-mono font-medium text-slate-900">{doc.doc_no}</td>
                     <td className="p-4 text-slate-500">{doc.doc_date}</td>
@@ -449,6 +459,16 @@ export const OutgoingDocs: React.FC<OutgoingDocsProps> = ({ currentUser }) => {
           </div>
         )}
       </div>
+
+      {filteredDocs.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredDocs.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
+      )}
 
       {/* Modal Dialog */}
       {isModalOpen && (
